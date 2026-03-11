@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">MusicPlayer</string>
+    <string name="song_count">%d brani</string>
+    <string name="no_songs">Nessun brano trovato sul dispositivo</string>
+    <string name="no_song_playing">Nessun brano</string>
+    <string name="music_player_title">🎵 Music Player</string>
+    <string name="cd_album_art">Copertina</string>
+    <string name="cd_previous">Precedente</string>
+    <string name="cd_play_pause">Play/Pausa</string>
+    <string name="cd_next">Successivo</string>
+    <string name="cd_random">Random</string>
+    <string name="back">Indietro</string>
 </resources>
