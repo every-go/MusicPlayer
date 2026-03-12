@@ -9,6 +9,8 @@ import android.os.IBinder
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import com.example.musicplayer.databinding.ActivityPlayerBinding
+import android.view.GestureDetector
+import android.view.MotionEvent
 
 class PlayerActivity : AppCompatActivity() {
 
@@ -69,6 +71,7 @@ class PlayerActivity : AppCompatActivity() {
                 if (musicService!!.isPlaying) R.drawable.ic_pause_white_24dp
                 else R.drawable.ic_play_white_24dp
             )
+            updateRandomIcon()
 
             musicService!!.onSongChanged.add(songChangedListener)
             musicService!!.onPlaybackStateChanged.add(playbackStateListener)
@@ -79,6 +82,8 @@ class PlayerActivity : AppCompatActivity() {
             isBound = false
         }
     }
+
+    private lateinit var gestureDetector: GestureDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,6 +96,41 @@ class PlayerActivity : AppCompatActivity() {
         val intent = Intent(this, MusicService::class.java)
         startService(intent)
         bindService(intent, connection, BIND_AUTO_CREATE)
+
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY = 100
+
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, vX: Float, vY: Float): Boolean {
+                val diffX = e2.x - (e1?.x ?: 0f)
+                val diffY = e2.y - (e1?.y ?: 0f)
+
+                if (kotlin.math.abs(diffX) > kotlin.math.abs(diffY) &&
+                    kotlin.math.abs(diffX) > SWIPE_THRESHOLD &&
+                    kotlin.math.abs(vX) > SWIPE_VELOCITY) {
+
+                    if (diffX > 0) {
+                        debounceClick { musicService?.playPrevious() }
+                    } else {
+                        debounceClick { musicService?.playNext() }
+                    }
+                    return true
+                }
+
+                // Swipe verticale dall'alto al basso → indietro
+                if (kotlin.math.abs(diffY) > kotlin.math.abs(diffX) &&
+                    diffY > SWIPE_THRESHOLD &&
+                    kotlin.math.abs(vY) > SWIPE_VELOCITY) {
+                    finish()
+                    return true
+                }
+
+                return false
+            }
+        })
+
+        // Applica alla view root del layout
+        (binding.root ).setGestureDetector(gestureDetector)
     }
 
     private fun setupButtons() {
@@ -99,8 +139,8 @@ class PlayerActivity : AppCompatActivity() {
             updateRandomIcon()
         }
         binding.btnPlayPause.setOnClickListener { musicService?.togglePlayPause() }
-        binding.btnNext.setOnClickListener      { musicService?.playNext() }
-        binding.btnPrevious.setOnClickListener  { musicService?.playPrevious() }
+        binding.btnNext.setOnClickListener     { debounceClick { musicService?.playNext() } }
+        binding.btnPrevious.setOnClickListener { debounceClick { musicService?.playPrevious() } }
         binding.btnBack.setOnClickListener      { finish() }
     }
 
@@ -112,6 +152,17 @@ class PlayerActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(sb: android.widget.SeekBar) {}
             override fun onStopTrackingTouch(sb: android.widget.SeekBar) {}
         })
+    }
+
+    private var lastClickTime = 0L
+    private val clickDebounce = 500L
+
+    private fun debounceClick(action: () -> Unit) {
+        val now = System.currentTimeMillis()
+        if (now - lastClickTime >= clickDebounce) {
+            lastClickTime = now
+            action()
+        }
     }
 
     private fun updateUI(song: Song) {

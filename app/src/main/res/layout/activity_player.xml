@@ -2,7 +2,7 @@
 <!--
     activity_player.xml  →  collegato a PlayerActivity.kt
 -->
-<LinearLayout
+<com.example.musicplayer.GestureLinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -16,7 +16,8 @@
         android:id="@+id/btnBack"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:src="@drawable/ic_skip_previous_white_24dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/ic_arrow_down_white_24dp"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/back"/>
 
@@ -142,4 +143,4 @@
 
     </LinearLayout>
 
-</LinearLayout>
+</com.example.musicplayer.GestureLinearLayout>

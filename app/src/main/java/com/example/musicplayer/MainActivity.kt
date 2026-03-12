@@ -1,7 +1,6 @@
 package com.example.musicplayer
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
@@ -42,6 +41,7 @@ class MainActivity : AppCompatActivity() {
 
             // Aggiorna la mini bar se c'è già una canzone in riproduzione
             musicService!!.currentSong?.let { showMiniPlayer(it) }
+            updateRandomIcon()
 
             musicService!!.onSongChanged.add(songChangedListener)
             musicService!!.onPlaybackStateChanged.add(playbackStateListener)
@@ -82,6 +82,11 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    override fun onResume(){
+        super.onResume()
+        updateRandomIcon()
+    }
+
     private fun setupRecyclerView() {
         adapter = SongAdapter { song, index ->
             // Solo questo nel click listener
@@ -107,15 +112,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("SetTextI18n")
+    private val hidePopup = Runnable { binding.tvLetterPopup.visibility = View.GONE }
+
     private fun loadSongs() {
         Thread {
             val result = SongRepository.getAllSongs(this)
             runOnUiThread {
-                songs = result
+                songs = result.sortedBy { it.title.sortKey() }
                 adapter.submitList(songs)
                 binding.tvSongCount.text = getString(R.string.song_count, songs.size)
                 binding.tvEmpty.visibility = if (songs.isEmpty()) View.VISIBLE else View.GONE
+
+                binding.alphabetScrollbar.onLetterSelected = { letter ->
+                    binding.tvLetterPopup.text = letter
+                    binding.tvLetterPopup.visibility = View.VISIBLE
+                    binding.tvLetterPopup.removeCallbacks(hidePopup)
+                    binding.tvLetterPopup.postDelayed(hidePopup, 800)
+
+                    val index = if (letter == "#") {
+                        songs.indexOfFirst {
+                            val first = it.title.firstOrNull()?.normalize()
+                            first == null || !first.isLetter()
+                        }
+                    } else {
+                        songs.indexOfFirst {
+                            it.title.firstOrNull()?.normalize()?.uppercaseChar()?.toString() == letter
+                        }
+                    }
+                    if (index != -1) {
+                        (binding.recyclerView.layoutManager as LinearLayoutManager)
+                            .scrollToPositionWithOffset(index, 0)
+                    }
+                }
             }
         }.start()
     }
@@ -123,7 +151,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupMiniPlayer() {
         binding.miniPlayer.setOnClickListener {
             if (musicService?.currentSong != null) {
-                // NON settare pendingPlaylist: la canzone è già in corso
                 val intent = Intent(this, PlayerActivity::class.java).apply {
                     putExtra(PlayerActivity.EXTRA_SONG_INDEX, musicService!!.currentIndex)
                 }
@@ -136,8 +163,19 @@ class MainActivity : AppCompatActivity() {
             updateRandomIcon()
         }
         binding.miniPlayPause.setOnClickListener { musicService?.togglePlayPause() }
-        binding.miniNext.setOnClickListener      { musicService?.playNext() }
-        binding.miniPrevious.setOnClickListener  { musicService?.playPrevious() }
+        binding.miniNext.setOnClickListener     { debounceClick { musicService?.playNext() } }
+        binding.miniPrevious.setOnClickListener { debounceClick { musicService?.playPrevious() } }
+    }
+
+    private var lastClickTime = 0L
+    private val clickDebounce= 500L
+
+    private fun debounceClick(action: () -> Unit) {
+        val now = System.currentTimeMillis()
+        if (now - lastClickTime >= clickDebounce) {
+            lastClickTime = now
+            action()
+        }
     }
 
     private fun showMiniPlayer(song: Song) {

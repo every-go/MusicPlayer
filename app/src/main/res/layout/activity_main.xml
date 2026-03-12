@@ -31,14 +31,39 @@
             android:textSize="14sp"/>
     </LinearLayout>
 
-    <!-- Lista canzoni — layout_weight="1" fa sì che occupi tutto lo spazio rimanente -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <!-- RecyclerView + FastScroller -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingBottom="8dp"/>
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_toStartOf="@+id/alphabetScrollbar"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"/>
+
+        <com.example.musicplayer.AlphabetScrollbar
+            android:id="@+id/alphabetScrollbar"
+            android:layout_width="32dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"/>
+
+        <TextView
+            android:id="@+id/tvLetterPopup"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:background="#CC000000"
+            android:visibility="gone"/>
+
+    </RelativeLayout>
 
     <!-- Messaggio se non ci sono canzoni -->
     <TextView
@@ -63,7 +88,6 @@
         android:gravity="center_vertical"
         android:visibility="gone">
 
-        <!-- Copertina piccola -->
         <ImageView
             android:id="@+id/miniAlbumArt"
             android:layout_width="52dp"
@@ -72,7 +96,6 @@
             android:background="#333333"
             android:contentDescription="@string/cd_album_art"/>
 
-        <!-- Titolo + artista -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -111,7 +134,6 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_random"/>
 
-        <!-- Bottone precedente -->
         <ImageButton
             android:id="@+id/miniPrevious"
             android:layout_width="40dp"
@@ -120,7 +142,6 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_previous"/>
 
-        <!-- Bottone play/pausa -->
         <ImageButton
             android:id="@+id/miniPlayPause"
             android:layout_width="48dp"
@@ -129,7 +150,6 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_play_pause"/>
 
-        <!-- Bottone successivo -->
         <ImageButton
             android:id="@+id/miniNext"
             android:layout_width="40dp"

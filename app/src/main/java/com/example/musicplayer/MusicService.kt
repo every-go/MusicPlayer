@@ -84,6 +84,7 @@ class MusicService : Service() {
 
     var currentIndex = -1
 
+    @Synchronized
     fun playSong(index: Int, addToHistory: Boolean = true) {
         if (playlist.isEmpty() || index < 0 || index >= playlist.size) return
 
@@ -143,6 +144,7 @@ class MusicService : Service() {
 
     var isShuffleEnabled: Boolean = true
 
+    @Synchronized
     fun playNext() {
         if (playlist.isEmpty()) return
 
@@ -165,6 +167,7 @@ class MusicService : Service() {
         isShuffleEnabled = !isShuffleEnabled
     }
 
+    @Synchronized
     fun playPrevious() {
         if ((mediaPlayer?.currentPosition ?: 0) > 3000) {
             mediaPlayer?.seekTo(0)
