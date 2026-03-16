@@ -27,12 +27,22 @@ class MusicService : Service() {
 
     // ---- Player ----
     private var mediaPlayer: MediaPlayer? = null
-    var playlist: List<Song> = emptyList()
 
-    val currentSong get() = playlist.getOrNull(currentIndex)
-    val isPlaying get() = mediaPlayer?.isPlaying ?: false
-    val currentPosition get() = mediaPlayer?.currentPosition ?: 0
-    val duration get() = mediaPlayer?.duration ?: 0
+    // ---- Coda e navigazione ----
+    private val queue = PlaybackQueue()
+
+    var playlist: List<Song>
+        get() = queue.playlist
+        set(value) { queue.playlist = value }
+
+    val currentIndex        get() = queue.currentIndex
+    val currentSong         get() = queue.currentSong
+    val isPlaying           get() = mediaPlayer?.isPlaying ?: false
+    val currentPosition     get() = mediaPlayer?.currentPosition ?: 0
+    val duration            get() = mediaPlayer?.duration ?: 0
+    var isShuffleEnabled: Boolean
+        get() = queue.isShuffleEnabled
+        set(value) { queue.isShuffleEnabled = value }
 
     // Callbacks verso le Activity
     val onSongChanged = mutableListOf<(Song) -> Unit>()
@@ -60,17 +70,26 @@ class MusicService : Service() {
         super.onDestroy()
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     // ---- MediaSession setup ----
 
     private fun setupMediaSession() {
         mediaSession = MediaSessionCompat(this, "MusicPlayerSession")
 
         mediaSession.setCallback(object : MediaSessionCompat.Callback() {
-            override fun onPlay()                { if (!isPlaying) togglePlayPause() }
-            override fun onPause()               { if (isPlaying)  togglePlayPause() }
-            override fun onSkipToNext()          { playNext() }
-            override fun onSkipToPrevious()      { playPrevious() }
-            override fun onSeekTo(pos: Long)     { seekTo(pos.toInt()) }
+            override fun onPlay()            { if (!isPlaying) togglePlayPause() }
+            override fun onPause()           { if (isPlaying)  togglePlayPause() }
+            override fun onSkipToNext()      { playNext() }
+            override fun onSkipToPrevious()  { playPrevious() }
+            override fun onSeekTo(pos: Long) { seekTo(pos.toInt()) }
         })
 
         mediaSession.setPlaybackState(buildPlaybackState(false))
@@ -79,21 +98,9 @@ class MusicService : Service() {
 
     // ---- Controlli pubblici ----
 
-    private var history = mutableListOf<Int>()
-    private var forwardHistory = mutableListOf<Int>()
-
-    var currentIndex = -1
-
     @Synchronized
     fun playSong(index: Int, addToHistory: Boolean = true) {
-        if (playlist.isEmpty() || index < 0 || index >= playlist.size) return
-
-        if (addToHistory && currentIndex != -1 && currentIndex != index) {
-            history.add(currentIndex)
-            forwardHistory.clear()
-        }
-        currentIndex = index
-        val song = playlist[index]
+        val song = queue.moveTo(index, addToHistory) ?: return
 
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
@@ -114,7 +121,7 @@ class MusicService : Service() {
         updateMediaSessionPlaybackState(true)
         updateMediaSessionMetadata(song)
 
-        // UN solo Thread per copertina, notifica, widget
+        // Un solo Thread per copertina, notifica, widget
         Thread {
             val art = SongRepository.getAlbumArt(this, song.uri)
             updateNotification(song, art)
@@ -142,41 +149,25 @@ class MusicService : Service() {
         }
     }
 
-    var isShuffleEnabled: Boolean = true
-
     @Synchronized
     fun playNext() {
-        if (playlist.isEmpty()) return
-
-        val next = if (isShuffleEnabled && playlist.size > 1) {
-            if (forwardHistory.isNotEmpty()) {
-                val nextIndex = forwardHistory.removeAt(forwardHistory.size - 1)
-                history.add(currentIndex)
-                playSong(nextIndex, addToHistory = false)
-                return
-            } else {
-                (0 until playlist.size).filter { it != currentIndex }.random()
-            }
-        } else {
-            (currentIndex + 1) % playlist.size
-        }
-        playSong(next)
-    }
-
-    fun toggleShuffle() {
-        isShuffleEnabled = !isShuffleEnabled
+        queue.next() ?: return
+        playSong(queue.currentIndex, addToHistory = false)
     }
 
     @Synchronized
     fun playPrevious() {
         if ((mediaPlayer?.currentPosition ?: 0) > 3000) {
             mediaPlayer?.seekTo(0)
-        } else if (history.isNotEmpty()) {
-            forwardHistory.add(currentIndex)
-            val prevIndex = history.removeAt(history.size - 1)
-            playSong(prevIndex, addToHistory = false)
+            return
+        }
+        when (queue.previous()) {
+            is PlaybackQueue.PreviousAction.PlaySong   -> playSong(queue.currentIndex, addToHistory = false)
+            is PlaybackQueue.PreviousAction.SeekToStart -> mediaPlayer?.seekTo(0)
         }
     }
+
+    fun toggleShuffle() = queue.toggleShuffle()
 
     fun seekTo(ms: Int) {
         mediaPlayer?.seekTo(ms)

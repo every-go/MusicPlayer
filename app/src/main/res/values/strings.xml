@@ -10,4 +10,8 @@
     <string name="cd_next">Successivo</string>
     <string name="cd_random">Random</string>
     <string name="back">Indietro</string>
+    <string name="cd_scan">Scansiona libreria</string>
+    <string name="cd_more_options">Altre opzioni</string>
+    <string name="action_scan_library">Aggiorna libreria</string>
+    <string name="cd_play_all">Riproduci tutto</string>
 </resources>

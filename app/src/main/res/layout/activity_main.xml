@@ -14,22 +14,45 @@
         android:padding="16dp"
         android:gravity="center_vertical">
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp"
-            android:textStyle="bold"/>
+        <ImageButton
+            android:id="@+id/btnPlayAll"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_play_white_24dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_play_all"/>
 
         <TextView
             android:id="@+id/tvSongCount"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/song_count"
             android:textColor="#AAAAAA"
-            android:textSize="14sp"/>
+            android:textSize="14sp"
+            android:visibility="gone"/>
+
+        <!-- 3 puntini -->
+        <ImageButton
+            android:id="@+id/btnOverflow"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_more_vert_white_24dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_more_options"/>
+
     </LinearLayout>
+
+    <!-- Barra di avanzamento scansione -->
+    <ProgressBar
+        android:id="@+id/progressScan"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:indeterminate="true"
+        android:indeterminateTint="#BB86FC"
+        android:visibility="gone"/>
 
     <!-- RecyclerView + FastScroller -->
     <RelativeLayout

@@ -7,17 +7,49 @@ import android.os.Build
 import android.provider.MediaStore
 import android.media.MediaMetadataRetriever
 
+// ---- Data class di supporto per le viste Artist / Album / Genre ----
+
+data class Artist(
+    val name: String,
+    val songs: List<Song>,
+    val albumCount: Int = songs.map { it.album }.distinct().count()
+)
+
+data class Album(
+    val title: String,
+    val artist: String,
+    val year: String,
+    val songs: List<Song>,
+)
+
+data class Genre(
+    val name: String,
+    val songs: List<Song>,
+)
+
 /**
  * Legge le canzoni direttamente da MediaStore (i tag ID3 dei file audio).
  * Nessun DB custom — Android indicizza già tutto.
+ *
+ * loadAllArtists / loadAllAlbums / loadAllGenres / getAlbumArt lavorano
+ * sulla List<Song> già in memoria — nessuna query aggiuntiva a MediaStore.
  */
 object SongRepository {
+
+    // Regex: cattura tutto ciò che precede la prima virgola.
+    // "Sfera Ebbasta, Capo Plaza" → "Sfera Ebbasta"
+    // "Drake"                     → "Drake"
+    private val firstArtistRegex = Regex("""^([^,]+)""")
+
+    private fun extractFirstArtist(raw: String): String =
+        firstArtistRegex.find(raw.trim())?.value?.trim() ?: raw.trim()
+
+    // ---- Canzoni (MediaStore) ----
 
     fun getAllSongs(context: Context): List<Song> {
         val songs = mutableListOf<Song>()
 
-        // Prima carica tutti i generi in una mappa id→genere
-        val genreMap = loadAllGenres(context)
+        val genreMap = fetchGenresFromMediaStore(context)
 
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
@@ -62,7 +94,7 @@ object SongRepository {
                     album       = cursor.getString(albumCol)       ?: "Album sconosciuto",
                     year        = cursor.getString(yearCol)        ?: "",
                     trackNumber = cursor.getInt(trackCol),
-                    genre       = genreMap[id] ?: "",   // ← dalla mappa, non da query separata
+                    genre       = genreMap[id] ?: "",
                     duration    = cursor.getLong(durationCol),
                     uri         = ContentUris.withAppendedId(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
@@ -74,8 +106,73 @@ object SongRepository {
         return songs
     }
 
-    // Una sola query per TUTTI i generi → mappa songId → genere
-    private fun loadAllGenres(context: Context): Map<Long, String> {
+    // ---- Artisti ----
+
+    /**
+     * Raggruppa i brani per primo artista (prima della virgola).
+     * Ordine: alfabetico per nome artista.
+     */
+    fun loadAllArtists(songs: List<Song>): List<Artist> {
+        return songs
+            .groupBy { extractFirstArtist(it.artist) }
+            .map { (name, artistSongs) ->
+                Artist(
+                    name  = name,
+                    songs = artistSongs.sortedWith(
+                        compareBy({ it.album }, { it.trackNumber })
+                    )
+                )
+            }
+            .sortedBy { it.name.lowercase() }
+    }
+
+    // ---- Album ----
+
+    /**
+     * Raggruppa i brani per album.
+     * Usa albumArtist se presente, altrimenti primo artista del campo artist.
+     * Ordine: alfabetico per titolo album.
+     */
+    fun loadAllAlbums(songs: List<Song>): List<Album> {
+        return songs
+            .groupBy { it.album }
+            .map { (albumTitle, albumSongs) ->
+                val sorted      = albumSongs.sortedBy { it.trackNumber }
+                val firstSong   = sorted.first()
+                val albumArtist = firstSong.albumArtist
+                    .takeIf { it.isNotBlank() }
+                    ?: extractFirstArtist(firstSong.artist)
+                Album(
+                    title  = albumTitle,
+                    artist = albumArtist,
+                    year   = firstSong.year,
+                    songs  = sorted
+                )
+            }
+            .sortedBy { it.title.lowercase() }
+    }
+
+    // ---- Generi ----
+
+    /**
+     * Raggruppa i brani per genere dalla List<Song> già in memoria.
+     * I brani senza genere finiscono nel gruppo "Sconosciuto".
+     * Ordine: alfabetico per nome genere.
+     */
+    fun loadAllGenres(songs: List<Song>): List<Genre> {
+        return songs
+            .groupBy { it.genre.takeIf { g -> g.isNotBlank() } ?: "Sconosciuto" }
+            .map { (name, genreSongs) ->
+                Genre(
+                    name  = name,
+                    songs = genreSongs.sortedBy { it.title }
+                )
+            }
+            .sortedBy { it.name.lowercase() }
+    }
+
+    // Chiamata SOLO internamente da getAllSongs() per popolare Song.genre
+    private fun fetchGenresFromMediaStore(context: Context): Map<Long, String> {
         val map = mutableMapOf<Long, String>()
         try {
             val genres = MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI
@@ -89,7 +186,6 @@ object SongRepository {
                 while (genreCursor.moveToNext()) {
                     val genreId   = genreCursor.getLong(gIdCol)
                     val genreName = genreCursor.getString(gNameCol) ?: continue
-                    // Per ogni genere, carica i suoi brani
                     val membersUri = MediaStore.Audio.Genres.Members.getContentUri("external", genreId)
                     context.contentResolver.query(
                         membersUri,
@@ -110,9 +206,16 @@ object SongRepository {
         return map
     }
 
+    // ---- Copertine ----
+
     /**
-     * Carica la copertina dell'album come Bitmap.
-     * Restituisce null se non disponibile.
+     * Overload che accetta una Song — usa la uri già contenuta nel modello.
+     */
+    fun getAlbumArt(context: Context, song: Song): android.graphics.Bitmap? =
+        getAlbumArt(context, song.uri)
+
+    /**
+     * Overload che accetta direttamente una Uri (usato internamente e da MusicService).
      */
     fun getAlbumArt(context: Context, songUri: Uri): android.graphics.Bitmap? {
         return try {

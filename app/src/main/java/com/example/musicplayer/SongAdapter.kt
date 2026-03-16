@@ -11,6 +11,16 @@ class SongAdapter(
     private val onSongClick: (Song, Int) -> Unit
 ) : ListAdapter<Song, SongAdapter.SongViewHolder>(SongDiffCallback()) {
 
+    private var currentSongId: Long = -1
+
+    fun setCurrentSong(songId: Long) {
+        val old = currentList.indexOfFirst { it.id == currentSongId }
+        val new = currentList.indexOfFirst { it.id == songId }
+        currentSongId = songId
+        if (old != -1) notifyItemChanged(old)   // deseleziona il vecchio
+        if (new != -1) notifyItemChanged(new)   // evidenzia il nuovo
+    }
+
     inner class SongViewHolder(
         private val binding: ItemSongBinding   // ← generato da item_song.xml
     ) : RecyclerView.ViewHolder(binding.root) {
@@ -20,9 +30,21 @@ class SongAdapter(
             binding.tvArtist.text   = song.artist
             binding.tvDuration.text = song.formattedDuration()
 
-            binding.root.setOnClickListener {
-                onSongClick(song, position)
-            }
+            val isCurrent = song.id == currentSongId
+            binding.tvTitle.setTextColor(
+                if (isCurrent) 0xFFBB86FC.toInt()   // viola accent
+                else           0xFFFFFFFF.toInt()    // bianco normale
+            )
+            binding.tvArtist.setTextColor(
+                if (isCurrent) 0xFFBB86FC.toInt()
+                else           0xFFAAAAAA.toInt()
+            )
+            binding.root.setBackgroundColor(
+                if (isCurrent) 0xFF2A2A3A.toInt()   // sfondo leggermente diverso
+                else           0x00000000.toInt()    // trasparente
+            )
+
+            binding.root.setOnClickListener { onSongClick(song, position) }
         }
     }
 
