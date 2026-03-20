@@ -14,4 +14,20 @@
     <string name="cd_more_options">Altre opzioni</string>
     <string name="action_scan_library">Aggiorna libreria</string>
     <string name="cd_play_all">Riproduci tutto</string>
+    <string name="cd_search">Ricerca</string>
+    <string name="title_edit_metadata">Modifica metadati</string>
+    <string name="action_edit_metadata">Modifica</string>
+    <string name="action_delete_file">Elimina</string>
+    <string name="action_save">Salva</string>
+    <string name="label_title">Titolo</string>
+    <string name="label_artist">Artista</string>
+    <string name="label_album_artist">Artista album</string>
+    <string name="label_album">Album</string>
+    <string name="label_year">Anno</string>
+    <string name="label_track_number">Numero traccia</string>
+    <string name="label_genre">Genere</string>
+    <string name="success_metadata_saved">Metadati salvati</string>
+    <string name="error_metadata_save">Errore nel salvataggio</string>
+    <string name="error_permission_denied">Permesso negato</string>
+    <string name="error_write_request">Impossibile richiedere il permesso</string>
 </resources>

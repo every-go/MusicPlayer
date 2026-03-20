@@ -100,10 +100,10 @@ class MusicWidgetProvider : AppWidgetProvider() {
             // Click sulla barra → apri MainActivity
             val openAppIntent = PendingIntent.getActivity(
                 context, 0,
-                Intent(context, MainActivity::class.java).apply {
+                Intent(context, PlayerActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
                 },
-                PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
             views.setOnClickPendingIntent(R.id.widgetTitle,  openAppIntent)
             views.setOnClickPendingIntent(R.id.widgetArtist, openAppIntent)

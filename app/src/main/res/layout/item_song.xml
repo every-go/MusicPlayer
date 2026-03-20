@@ -46,6 +46,16 @@
         android:layout_height="wrap_content"
         android:textColor="#888888"
         android:textSize="13sp"
-        android:layout_marginStart="8dp"/>
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="4dp"/>
+
+    <!-- 3 puntini -->
+    <ImageButton
+        android:id="@+id/btnSongMenu"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_more_vert_white_24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_more_options"/>
 
 </LinearLayout>

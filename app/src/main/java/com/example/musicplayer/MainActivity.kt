@@ -16,6 +16,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicplayer.databinding.ActivityMainBinding
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.activity.result.IntentSenderRequest
+import android.provider.MediaStore
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,6 +44,14 @@ class MainActivity : AppCompatActivity() {
     }
     private val playbackStateListener: (Boolean) -> Unit = { playing ->
         runOnUiThread { updatePlayPauseIcon(playing) }
+    }
+
+    private val editMetadataLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            scanSongs()
+        }
     }
 
     private val connection = object : ServiceConnection {
@@ -76,9 +90,40 @@ class MainActivity : AppCompatActivity() {
         setupHeader()
         checkPermissionAndLoad()
 
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            binding.header.setPadding(
+                binding.header.paddingLeft,
+                bars.top,
+                binding.header.paddingRight,
+                binding.header.paddingBottom
+            )
+
+            binding.miniPlayer.setPadding(
+                binding.miniPlayer.paddingLeft,
+                binding.miniPlayer.paddingTop,
+                binding.miniPlayer.paddingRight,
+                bars.bottom
+            )
+
+            insets
+        }
+
         Intent(this, MusicService::class.java).also { intent ->
             bindService(intent, connection, BIND_AUTO_CREATE)
         }
+
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding.etSearch.isVisible) {
+                    closeSearch()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
     }
 
     override fun onDestroy() {
@@ -99,6 +144,25 @@ class MainActivity : AppCompatActivity() {
     // ---- Setup ----
 
     private fun setupHeader() {
+
+        binding.btnSearch.setOnClickListener {
+            if (binding.etSearch.isGone) {
+                binding.etSearch.visibility = View.VISIBLE
+                binding.etSearch.requestFocus()
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.showSoftInput(binding.etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            } else {
+                closeSearch()
+            }
+        }
+
+        binding.etSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                filterSongs(s?.toString() ?: "")
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
 
         binding.btnPlayAll.setOnClickListener {
             if (songs.isEmpty()) return@setOnClickListener
@@ -124,11 +188,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        adapter = SongAdapter { song, index ->
-            PlayerActivity.pendingPlaylist = songs
-            musicService?.playlist = songs
-            musicService?.playSong(index)
-        }
+        adapter = SongAdapter(
+            onSongClick = { song, _ ->
+                val realIndex = songs.indexOfFirst { it.id == song.id }
+                if (realIndex != -1) {
+                    PlayerActivity.pendingPlaylist = songs
+                    musicService?.playlist = songs
+                    musicService?.playSong(realIndex)
+                }
+            },
+            onEditClick = { song ->
+                val intent = Intent(this, EditMetadataActivity::class.java).apply {
+                    putExtra(EditMetadataActivity.EXTRA_SONG_ID,      song.id.toString())
+                    putExtra(EditMetadataActivity.EXTRA_SONG_URI,     song.uri.toString())
+                    putExtra(EditMetadataActivity.EXTRA_TITLE,        song.title)
+                    putExtra(EditMetadataActivity.EXTRA_ARTIST,       song.artist)
+                    putExtra(EditMetadataActivity.EXTRA_ALBUM_ARTIST, song.albumArtist)
+                    putExtra(EditMetadataActivity.EXTRA_ALBUM,        song.album)
+                    putExtra(EditMetadataActivity.EXTRA_YEAR,         song.year)
+                    putExtra(EditMetadataActivity.EXTRA_TRACK_NUMBER, song.trackNumber.toString())
+                    putExtra(EditMetadataActivity.EXTRA_GENRE,        song.genre)
+                }
+                editMetadataLauncher.launch(intent)
+            },
+            onDeleteClick = { song ->
+                deleteSong(song)
+            }
+        )
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
     }
@@ -144,6 +230,24 @@ class MainActivity : AppCompatActivity() {
                 loadSongs()
             else ->
                 requestPermissionLauncher.launch(permission)
+        }
+    }
+
+    private val deleteLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            scanSongs()
+        }
+    }
+
+    private fun deleteSong(song: Song) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val pi = MediaStore.createDeleteRequest(contentResolver, listOf(song.uri))
+            deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+        } else {
+            contentResolver.delete(song.uri, null, null)
+            scanSongs()
         }
     }
 
@@ -277,5 +381,30 @@ class MainActivity : AppCompatActivity() {
             if (musicService?.isShuffleEnabled == true) R.drawable.ic_random_white_24dp
             else R.drawable.ic_random_off_white_24dp
         )
+    }
+
+    // --- Ricerca ---
+
+    private fun filterSongs(query: String) {
+        val tokens = query.trim().lowercase()
+            .split("\\s+".toRegex())
+            .filter { it.isNotEmpty() }
+
+        val filtered = if (tokens.isEmpty()) songs else songs.filter { song ->
+            tokens.all { token ->
+                song.title.lowercase().contains(token)  ||
+                        song.artist.lowercase().contains(token) ||
+                        song.album.lowercase().contains(token)
+            }
+        }
+        adapter.submitList(filtered)
+    }
+
+    private fun closeSearch() {
+        binding.etSearch.visibility = View.GONE
+        binding.etSearch.text.clear()
+        adapter.submitList(songs)
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.hideSoftInputFromWindow(binding.etSearch.windowToken, 0)
     }
 }
