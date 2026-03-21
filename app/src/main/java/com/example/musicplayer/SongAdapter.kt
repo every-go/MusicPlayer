@@ -2,7 +2,6 @@ package com.example.musicplayer
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -11,7 +10,8 @@ import com.example.musicplayer.databinding.ItemSongBinding
 class SongAdapter(
     private val onSongClick: (Song, Int) -> Unit,
     private val onEditClick: (Song) -> Unit,
-    private val onDeleteClick: (Song) -> Unit
+    private val onDeleteClick: (Song) -> Unit,
+    private val onPlayNextClick: ((Song) -> Unit)? = null
 ) : ListAdapter<Song, SongAdapter.SongViewHolder>(SongDiffCallback()) {
 
     private var currentSongId: Long = -1
@@ -35,33 +35,28 @@ class SongAdapter(
 
             val isCurrent = song.id == currentSongId
             binding.tvTitle.setTextColor(
-                if (isCurrent) 0xFFBB86FC.toInt()
-                else           0xFFFFFFFF.toInt()
+                if (isCurrent) 0xFFBB86FC.toInt() else 0xFFFFFFFF.toInt()
             )
             binding.tvArtist.setTextColor(
-                if (isCurrent) 0xFFBB86FC.toInt()
-                else           0xFFAAAAAA.toInt()
+                if (isCurrent) 0xFFBB86FC.toInt() else 0xFFAAAAAA.toInt()
             )
             binding.root.setBackgroundColor(
-                if (isCurrent) 0xFF2A2A3A.toInt()
-                else 0x00000000
+                if (isCurrent) 0xFF2A2A3A.toInt() else 0x00000000
             )
 
-            binding.root.setOnClickListener {
-                onSongClick(song, position)
-            }
+            binding.root.setOnClickListener { onSongClick(song, position) }
 
             binding.btnSongMenu.setOnClickListener { anchor ->
-                val popup = PopupMenu(anchor.context, anchor)
-                popup.menuInflater.inflate(R.menu.menu_song_item, popup.menu)
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        R.id.action_edit_metadata -> { onEditClick(song); true }
-                        R.id.action_delete_file -> { onDeleteClick(song); true }
-                        else -> false
-                    }
-                }
-                popup.show()
+                showSongMenu(
+                    context = anchor.context,
+                    anchor = anchor,
+                    onPlayNext = onPlayNextClick?.let { { it(song) } },
+                    onAddToPlaylist = { playlist ->
+                        PlaylistRepository.addSong(anchor.context, playlist.id, song.id)
+                    },
+                    onEdit = { onEditClick(song) },
+                    onDelete = { onDeleteClick(song) }
+                )
             }
         }
     }

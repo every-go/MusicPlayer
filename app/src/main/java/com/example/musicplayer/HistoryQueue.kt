@@ -1,10 +1,12 @@
 package com.example.musicplayer
 
-class PlaybackQueue {
+class HistoryQueue {
 
     var playlist: List<Song> = emptyList()
     var currentIndex: Int = -1
     var isShuffleEnabled: Boolean = true
+
+    var hasExplicitNext = false
 
     private val history        = mutableListOf<Int>()
     private val forwardHistory = mutableListOf<Int>()
@@ -34,6 +36,11 @@ class PlaybackQueue {
     @Synchronized
     fun next(): Song? {
         if (playlist.isEmpty()) return null
+
+        if (hasExplicitNext) {
+            hasExplicitNext = false
+            return moveTo(currentIndex + 1)
+        }
 
         if (isShuffleEnabled && playlist.size > 1) {
             if (forwardHistory.isNotEmpty()) {

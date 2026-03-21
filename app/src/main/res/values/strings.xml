@@ -30,4 +30,10 @@
     <string name="error_metadata_save">Errore nel salvataggio</string>
     <string name="error_permission_denied">Permesso negato</string>
     <string name="error_write_request">Impossibile richiedere il permesso</string>
+    <string name="no_artist">Nessun artista</string>
+    <string name="no_album">Nessun album</string>
+    <string name="other_options">Altre opzioni</string>
+    <string name="modifica_copertina">Modifica copertina</string>
+    <string name="copertina">Copertina album</string>
+    <string name="hint_research">Cerca brani, artista, album</string>
 </resources>

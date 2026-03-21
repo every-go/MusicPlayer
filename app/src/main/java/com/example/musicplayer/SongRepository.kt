@@ -22,11 +22,6 @@ data class Album(
     val songs: List<Song>,
 )
 
-data class Genre(
-    val name: String,
-    val songs: List<Song>,
-)
-
 /**
  * Legge le canzoni direttamente da MediaStore (i tag ID3 dei file audio).
  * Nessun DB custom — Android indicizza già tutto.
@@ -49,16 +44,9 @@ object SongRepository {
     fun getAllSongs(context: Context): List<Song> {
         val songs = mutableListOf<Song>()
 
-        val genreMap = fetchGenresFromMediaStore(context)
-
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.TITLE,
-            MediaStore.Audio.Media.ARTIST,
-            MediaStore.Audio.Media.ALBUM_ARTIST,
-            MediaStore.Audio.Media.ALBUM,
-            MediaStore.Audio.Media.YEAR,
-            MediaStore.Audio.Media.TRACK,
+            MediaStore.Audio.Media.DATA, // percorso fisico del file
             MediaStore.Audio.Media.DURATION,
         )
 
@@ -71,34 +59,65 @@ object SongRepository {
             collection, projection,
             "${MediaStore.Audio.Media.IS_MUSIC} != 0",
             null,
-            "${MediaStore.Audio.Media.TITLE} ASC"
+            null
         )?.use { cursor ->
             android.util.Log.d("MusicPlayer", "Righe trovate: ${cursor.count}")
 
-            val idCol          = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-            val titleCol       = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-            val artistCol      = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-            val albumArtistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ARTIST)
-            val albumCol       = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-            val yearCol        = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
-            val trackCol       = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-            val durationCol    = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+            val idCol       = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+            val dataCol     = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+            val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
 
             while (cursor.moveToNext()) {
-                val id = cursor.getLong(idCol)
-                songs.add(Song(
-                    id          = id,
-                    title       = cursor.getString(titleCol)       ?: "Sconosciuto",
-                    artist      = cursor.getString(artistCol)      ?: "Artista sconosciuto",
-                    albumArtist = cursor.getString(albumArtistCol) ?: "",
-                    album       = cursor.getString(albumCol)       ?: "Album sconosciuto",
-                    year        = cursor.getString(yearCol)        ?: "",
-                    trackNumber = cursor.getInt(trackCol),
-                    genre       = genreMap[id] ?: "",
-                    duration    = cursor.getLong(durationCol),
-                    uri         = ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-                ))
+                val id       = cursor.getLong(idCol)
+                val path     = cursor.getString(dataCol) ?: continue
+                val duration = cursor.getLong(durationCol)
+                val uri      = ContentUris.withAppendedId(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id
+                )
+
+                try {
+                    val file = java.io.File(path)
+                    if (!file.exists()) continue
+
+                    val audioFile = org.jaudiotagger.audio.AudioFileIO.read(file)
+                    val tag = audioFile.tag
+
+                    val title       = tag?.getFirst(org.jaudiotagger.tag.FieldKey.TITLE)?.takeIf { it.isNotBlank() } ?: file.nameWithoutExtension
+                    val artist      = tag?.getFirst(org.jaudiotagger.tag.FieldKey.ARTIST)?.takeIf { it.isNotBlank() } ?: "Artista sconosciuto"
+                    val albumArtist = tag?.getFirst(org.jaudiotagger.tag.FieldKey.ALBUM_ARTIST) ?: ""
+                    val album       = tag?.getFirst(org.jaudiotagger.tag.FieldKey.ALBUM)?.takeIf { it.isNotBlank() } ?: "Album sconosciuto"
+                    val year        = tag?.getFirst(org.jaudiotagger.tag.FieldKey.YEAR) ?: ""
+                    val trackNumber = tag?.getFirst(org.jaudiotagger.tag.FieldKey.TRACK)?.toIntOrNull() ?: 0
+                    val genre       = tag?.getFirst(org.jaudiotagger.tag.FieldKey.GENRE) ?: ""
+
+                    songs.add(Song(
+                        id          = id,
+                        title       = title,
+                        artist      = artist,
+                        albumArtist = albumArtist,
+                        album       = album,
+                        year        = year,
+                        trackNumber = trackNumber,
+                        genre       = genre,
+                        duration    = duration,
+                        uri         = uri
+                    ))
+                } catch (e: Exception) {
+                    android.util.Log.w("MusicPlayer", "Errore lettura tag: $path — ${e.message}")
+                    // fallback minimo
+                    songs.add(Song(
+                        id          = id,
+                        title       = java.io.File(path).nameWithoutExtension,
+                        artist      = "Artista sconosciuto",
+                        albumArtist = "",
+                        album       = "Album sconosciuto",
+                        year        = "",
+                        trackNumber = 0,
+                        genre       = "",
+                        duration    = duration,
+                        uri         = uri
+                    ))
+                }
             }
         }
 
@@ -114,16 +133,22 @@ object SongRepository {
      */
     fun loadAllArtists(songs: List<Song>): List<Artist> {
         return songs
-            .groupBy { extractFirstArtist(it.artist) }
-            .map { (name, artistSongs) ->
+            .flatMap { song ->
+                song.artist
+                    .split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .map { artistName -> Pair(artistName, song) }
+            }
+            .groupBy { it.first }
+            .map { (name, pairs) ->
                 Artist(
                     name  = name,
-                    songs = artistSongs.sortedWith(
-                        compareBy({ it.album }, { it.trackNumber })
-                    )
+                    songs = pairs.map { it.second }
+                        .sortedWith(compareBy({ it.album }, { it.trackNumber }))
                 )
             }
-            .sortedBy { it.name.lowercase() }
+            .sortedBy { it.name.sortKey() }
     }
 
     // ---- Album ----
@@ -152,60 +177,6 @@ object SongRepository {
             .sortedBy { it.title.lowercase() }
     }
 
-    // ---- Generi ----
-
-    /**
-     * Raggruppa i brani per genere dalla List<Song> già in memoria.
-     * I brani senza genere finiscono nel gruppo "Sconosciuto".
-     * Ordine: alfabetico per nome genere.
-     */
-    fun loadAllGenres(songs: List<Song>): List<Genre> {
-        return songs
-            .groupBy { it.genre.takeIf { g -> g.isNotBlank() } ?: "Sconosciuto" }
-            .map { (name, genreSongs) ->
-                Genre(
-                    name  = name,
-                    songs = genreSongs.sortedBy { it.title }
-                )
-            }
-            .sortedBy { it.name.lowercase() }
-    }
-
-    // Chiamata SOLO internamente da getAllSongs() per popolare Song.genre
-    private fun fetchGenresFromMediaStore(context: Context): Map<Long, String> {
-        val map = mutableMapOf<Long, String>()
-        try {
-            val genres = MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI
-            context.contentResolver.query(
-                genres,
-                arrayOf(MediaStore.Audio.Genres._ID, MediaStore.Audio.Genres.NAME),
-                null, null, null
-            )?.use { genreCursor ->
-                val gIdCol   = genreCursor.getColumnIndexOrThrow(MediaStore.Audio.Genres._ID)
-                val gNameCol = genreCursor.getColumnIndexOrThrow(MediaStore.Audio.Genres.NAME)
-                while (genreCursor.moveToNext()) {
-                    val genreId   = genreCursor.getLong(gIdCol)
-                    val genreName = genreCursor.getString(gNameCol) ?: continue
-                    val membersUri = MediaStore.Audio.Genres.Members.getContentUri("external", genreId)
-                    context.contentResolver.query(
-                        membersUri,
-                        arrayOf(MediaStore.Audio.Genres.Members.AUDIO_ID),
-                        null, null, null
-                    )?.use { membersCursor ->
-                        val audioIdCol = membersCursor.getColumnIndexOrThrow(
-                            MediaStore.Audio.Genres.Members.AUDIO_ID)
-                        while (membersCursor.moveToNext()) {
-                            map[membersCursor.getLong(audioIdCol)] = genreName
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            android.util.Log.w("MusicPlayer", "Generi non disponibili: ${e.message}")
-        }
-        return map
-    }
-
     // ---- Copertine ----
 
     /**
@@ -230,7 +201,7 @@ object SongRepository {
                     android.graphics.BitmapFactory.decodeByteArray(artBytes, 0, artBytes.size)
                 else null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

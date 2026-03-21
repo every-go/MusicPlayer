@@ -74,13 +74,6 @@ object SongCache {
         }
     }
 
-    // ---- Utilità ----
-
-    fun clear(context: Context) {
-        cacheFile(context).delete()
-        android.util.Log.d("MusicPlayer", "Cache eliminata")
-    }
-
     private fun cacheFile(context: Context): File =
         File(context.filesDir, FILE_NAME)
 }

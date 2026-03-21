@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/miniPlayer"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:orientation="horizontal"
+    android:background="#1E1E1E"
+    android:padding="8dp"
+    android:gravity="center_vertical"
+    android:visibility="gone">
+
+    <ImageView
+        android:id="@+id/miniAlbumArt"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:scaleType="centerCrop"
+        android:background="#333333"
+        android:contentDescription="@string/cd_album_art"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp">
+
+        <TextView
+            android:id="@+id/miniTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@string/no_song_playing"/>
+
+        <TextView
+            android:id="@+id/miniArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text=""/>
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/miniRandom"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_random_white_24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_random"/>
+
+    <ImageButton
+        android:id="@+id/miniPrevious"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_skip_previous_white_24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_previous"/>
+
+    <ImageButton
+        android:id="@+id/miniPlayPause"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_play_white_24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_play_pause"/>
+
+    <ImageButton
+        android:id="@+id/miniNext"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/ic_skip_next_white_24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_next"/>
+
+</LinearLayout>

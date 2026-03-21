@@ -59,7 +59,7 @@ class EditMetadataActivity : AppCompatActivity() {
         ) { result ->
             android.util.Log.d("MusicPlayer", "writeRequest result: ${result.resultCode}")
             if (result.resultCode == RESULT_OK) {
-                writeTagsDirectly()   // ← cambiato
+                writeTagsDirectly()
             } else {
                 Toast.makeText(this, getString(R.string.error_permission_denied), Toast.LENGTH_SHORT).show()
             }
@@ -79,9 +79,16 @@ class EditMetadataActivity : AppCompatActivity() {
         }
     }
 
+    private fun getRealPathFromUri(uri: Uri): String? {
+        val projection = arrayOf(MediaStore.Audio.Media.DATA)
+        return contentResolver.query(uri, projection, null, null, null)?.use {
+            val col = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+            if (it.moveToFirst()) it.getString(col) else null
+        }
+    }
+
     private fun writeTagsDirectly() {
         try {
-            // Ricava il nome file reale con estensione da MediaStore
             val fileName = contentResolver.query(
                 songUri,
                 arrayOf(MediaStore.Audio.Media.DISPLAY_NAME),
@@ -101,18 +108,38 @@ class EditMetadataActivity : AppCompatActivity() {
             }
 
             pfd.use {
-                // Copia il file descriptor in un file temporaneo con il nome corretto
                 val tempFile = java.io.File(cacheDir, fileName)
                 java.io.FileInputStream(pfd.fileDescriptor).use { input ->
                     tempFile.outputStream().use { output -> input.copyTo(output) }
                 }
 
-                val audioFile = org.jaudiotagger.audio.AudioFileIO.read(tempFile)
-                val tag = audioFile.tagOrCreateAndSetDefault
+                val mp3File = org.jaudiotagger.audio.AudioFileIO.read(tempFile)
+                        as org.jaudiotagger.audio.mp3.MP3File
+
+                // Crea un tag ID3v2.4 fresco
+                val newTag = org.jaudiotagger.tag.id3.ID3v24Tag()
+
+                // Copia la copertina dal tag vecchio se esiste
+                mp3File.iD3v2Tag?.let { oldTag ->
+                    try {
+                        val artworks = oldTag.getFields(org.jaudiotagger.tag.FieldKey.COVER_ART)
+                        artworks?.forEach { field -> newTag.setField(field) }
+                    } catch (e: Exception) { }
+                }
+
+                mp3File.iD3v2Tag = newTag
 
                 fun setFieldSafe(key: org.jaudiotagger.tag.FieldKey, value: String) {
-                    if (value.isBlank()) tag.deleteField(key)
-                    else tag.setField(key, value)
+                    if (value.isBlank()) {
+                        newTag.deleteField(key)
+                        return
+                    }
+                    try {
+                        newTag.setField(key, value)
+                        android.util.Log.d("MusicPlayer", "OK: $key = $value")
+                    } catch (e: Exception) {
+                        android.util.Log.e("MusicPlayer", "FAILED: $key = $value — ${e.message}")
+                    }
                 }
 
                 setFieldSafe(org.jaudiotagger.tag.FieldKey.TITLE,        binding.etTitle.text.toString().trim())
@@ -123,9 +150,26 @@ class EditMetadataActivity : AppCompatActivity() {
                 setFieldSafe(org.jaudiotagger.tag.FieldKey.TRACK,        binding.etTrackNumber.text.toString().trim())
                 setFieldSafe(org.jaudiotagger.tag.FieldKey.GENRE,        binding.etGenre.text.toString().trim())
 
-                audioFile.commit()
+                mp3File.commit()
 
-                // Riscrivi il file modificato tramite il descriptor originale
+                val cachedSongs = SongCache.load(this)?.toMutableList()
+                if (cachedSongs != null) {
+                    val index = cachedSongs.indexOfFirst { it.id == songId.toLong() }
+                    if (index != -1) {
+                        val old = cachedSongs[index]
+                        cachedSongs[index] = old.copy(
+                            title       = binding.etTitle.text.toString().trim().ifBlank { old.title },
+                            artist      = binding.etArtist.text.toString().trim().ifBlank { old.artist },
+                            albumArtist = binding.etAlbumArtist.text.toString().trim().ifBlank { old.albumArtist },
+                            album       = binding.etAlbum.text.toString().trim().ifBlank { old.album },
+                            year        = binding.etYear.text.toString().trim().ifBlank { old.year },
+                            trackNumber = binding.etTrackNumber.text.toString().trim().toIntOrNull() ?: old.trackNumber,
+                            genre       = binding.etGenre.text.toString().trim().ifBlank { old.genre }
+                        )
+                        SongCache.save(this, cachedSongs)
+                    }
+                }
+
                 val pfdWrite = contentResolver.openFileDescriptor(songUri, "rwt")!!
                 pfdWrite.use {
                     java.io.FileOutputStream(pfdWrite.fileDescriptor).use { out ->
@@ -136,7 +180,16 @@ class EditMetadataActivity : AppCompatActivity() {
                 tempFile.delete()
             }
 
-            contentResolver.notifyChange(songUri, null)
+            val path = getRealPathFromUri(songUri)
+            if (path != null) {
+                android.media.MediaScannerConnection.scanFile(
+                    this,
+                    arrayOf(path),
+                    null,
+                    null
+                )
+            }
+
             setResult(RESULT_OK)
             Toast.makeText(this, getString(R.string.success_metadata_saved), Toast.LENGTH_SHORT).show()
             finish()

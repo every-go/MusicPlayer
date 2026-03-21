@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -34,7 +35,6 @@
             android:textSize="14sp"
             android:visibility="gone"/>
 
-        <!-- Spacer -->
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -72,9 +72,9 @@
         android:inputType="text"
         android:imeOptions="actionSearch"
         android:background="@null"
+        android:hint="@string/hint_research"
         android:visibility="gone"/>
 
-    <!-- Barra di avanzamento scansione -->
     <ProgressBar
         android:id="@+id/progressScan"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
@@ -84,53 +84,39 @@
         android:indeterminateTint="#BB86FC"
         android:visibility="gone"/>
 
-    <!-- RecyclerView + FastScroller -->
-    <RelativeLayout
+    <!-- TAB LAYOUT -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#1E1E1E"
+        app:tabTextColor="#AAAAAA"
+        app:tabSelectedTextColor="#BB86FC"
+        app:tabIndicatorColor="#BB86FC"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabGravity="fill"/>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+            android:id="@+id/recyclerViewSearch"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_toStartOf="@+id/alphabetScrollbar"
-            android:clipToPadding="false"
-            android:paddingBottom="8dp"/>
-
-        <com.example.musicplayer.AlphabetScrollbar
-            android:id="@+id/alphabetScrollbar"
-            android:layout_width="32dp"
-            android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"/>
-
-        <TextView
-            android:id="@+id/tvLetterPopup"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_centerInParent="true"
-            android:gravity="center"
-            android:textColor="#FFFFFF"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:background="#CC000000"
+            android:background="#121212"
             android:visibility="gone"/>
 
-    </RelativeLayout>
+    </FrameLayout>
 
-    <!-- Messaggio se non ci sono canzoni -->
-    <TextView
-        android:id="@+id/tvEmpty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/no_songs"
-        android:textColor="#AAAAAA"
-        android:textSize="16sp"
-        android:gravity="center"
-        android:padding="32dp"
-        android:visibility="gone"/>
-
-    <!-- ========== MINI PLAYER BAR ========== -->
+    <!-- MINI PLAYER BAR -->
     <LinearLayout
         android:id="@+id/miniPlayer"
         android:layout_width="match_parent"

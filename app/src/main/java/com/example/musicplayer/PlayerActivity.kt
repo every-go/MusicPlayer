@@ -7,12 +7,14 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.appcompat.app.AppCompatActivity
 import com.example.musicplayer.databinding.ActivityPlayerBinding
 import android.view.GestureDetector
 import android.view.MotionEvent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.IntentSenderRequest
+import android.os.Build
+import android.provider.MediaStore
 
 class PlayerActivity : AppCompatActivity() {
 
@@ -85,6 +87,61 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    private val editMetadataLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            Thread {
+                SongCache.load(this) // forza rilettura cache
+                runOnUiThread {
+                    musicService?.currentSong?.let { updateUI(it) }
+                }
+            }.start()
+        }
+    }
+
+    private val deleteLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            finish()
+        }
+    }
+
+    private fun showOverflowMenu(anchor: android.view.View) {
+        val song = musicService?.currentSong ?: return
+        showSongMenu(
+            context = this,
+            anchor = anchor,
+            onAddToPlaylist = { playlist ->
+                PlaylistRepository.addSong(this, playlist.id, song.id)
+            },
+            onEdit = {
+                val intent = Intent(this, EditMetadataActivity::class.java).apply {
+                    putExtra(EditMetadataActivity.EXTRA_SONG_ID,      song.id.toString())
+                    putExtra(EditMetadataActivity.EXTRA_SONG_URI,     song.uri.toString())
+                    putExtra(EditMetadataActivity.EXTRA_TITLE,        song.title)
+                    putExtra(EditMetadataActivity.EXTRA_ARTIST,       song.artist)
+                    putExtra(EditMetadataActivity.EXTRA_ALBUM_ARTIST, song.albumArtist)
+                    putExtra(EditMetadataActivity.EXTRA_ALBUM,        song.album)
+                    putExtra(EditMetadataActivity.EXTRA_YEAR,         song.year)
+                    putExtra(EditMetadataActivity.EXTRA_TRACK_NUMBER, song.trackNumber.toString())
+                    putExtra(EditMetadataActivity.EXTRA_GENRE,        song.genre)
+                }
+                editMetadataLauncher.launch(intent)
+            },
+            onDelete = {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val pi = MediaStore.createDeleteRequest(contentResolver, listOf(song.uri))
+                    deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+                } else {
+                    contentResolver.delete(song.uri, null, null)
+                    finish()
+                }
+            }
+        )
+    }
+
     private lateinit var gestureDetector: GestureDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -144,6 +201,8 @@ class PlayerActivity : AppCompatActivity() {
         binding.btnNext.setOnClickListener     { debounceClick { musicService?.playNext() } }
         binding.btnPrevious.setOnClickListener { debounceClick { musicService?.playPrevious() } }
         binding.btnBack.setOnClickListener      { finish() }
+
+        binding.btnOverflow.setOnClickListener { showOverflowMenu(it) }
     }
 
     private fun setupSeekBar() {

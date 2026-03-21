@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewAlbums"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_toStartOf="@+id/alphabetScrollbar"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"/>
+
+    <com.example.musicplayer.AlphabetScrollbar
+        android:id="@+id/alphabetScrollbar"
+        android:layout_width="32dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentEnd="true"/>
+
+    <TextView
+        android:id="@+id/tvLetterPopup"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:textColor="#FFFFFF"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:background="#CC000000"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/tvEmptyAlbums"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="@string/no_album"
+        android:textColor="#AAAAAA"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone"/>
+
+</RelativeLayout>

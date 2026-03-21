@@ -45,4 +45,9 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.media)
     implementation(libs.jaudiotagger)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.viewpager2)
+    implementation(libs.material)
 }

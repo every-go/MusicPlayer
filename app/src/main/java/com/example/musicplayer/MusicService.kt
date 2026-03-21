@@ -15,6 +15,8 @@ import androidx.core.app.NotificationCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.support.v4.media.MediaMetadataCompat
+import android.content.pm.ServiceInfo
+import android.os.Build
 
 class MusicService : Service() {
 
@@ -29,7 +31,7 @@ class MusicService : Service() {
     private var mediaPlayer: MediaPlayer? = null
 
     // ---- Coda e navigazione ----
-    private val queue = PlaybackQueue()
+    private val queue = HistoryQueue()
 
     var playlist: List<Song>
         get() = queue.playlist
@@ -156,14 +158,23 @@ class MusicService : Service() {
     }
 
     @Synchronized
+    fun playNextSong(song: Song) {
+        val mutablePlaylist = queue.playlist.toMutableList()
+        val insertIndex = queue.currentIndex + 1
+        mutablePlaylist.add(insertIndex, song)
+        queue.playlist = mutablePlaylist
+        queue.hasExplicitNext = true
+    }
+
+    @Synchronized
     fun playPrevious() {
         if ((mediaPlayer?.currentPosition ?: 0) > 3000) {
             mediaPlayer?.seekTo(0)
             return
         }
         when (queue.previous()) {
-            is PlaybackQueue.PreviousAction.PlaySong   -> playSong(queue.currentIndex, addToHistory = false)
-            is PlaybackQueue.PreviousAction.SeekToStart -> mediaPlayer?.seekTo(0)
+            is HistoryQueue.PreviousAction.PlaySong   -> playSong(queue.currentIndex, addToHistory = false)
+            is HistoryQueue.PreviousAction.SeekToStart -> mediaPlayer?.seekTo(0)
         }
     }
 
@@ -270,7 +281,11 @@ class MusicService : Service() {
 
     private fun updateNotification(song: Song, art: Bitmap? = null) {
         val notification = buildNotification(song, art)
-        startForeground(NOTIFICATION_ID, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     // Gestione Intent dalla notifica (bottoni precedente/play-pausa/successivo)
