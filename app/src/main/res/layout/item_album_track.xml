@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="12dp"
     android:gravity="center_vertical"
-    android:background="?android:attr/selectableItemBackground">
+    android:background="?android:attr/selectableItemBackground"
+    tools:ignore="UseCompoundDrawables">
 
     <TextView
         android:id="@+id/tvTrackNumber"
@@ -45,12 +48,16 @@
 
     </LinearLayout>
 
-    <ImageButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnTrackOverflow"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/ic_more_vert_white_24dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/other_options"
+        android:focusable="true"
+        app:icon="@drawable/ic_more_vert_white_24dp"
+        app:iconSize="24dp"
+        app:iconTint="#BB86FC"
         android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/other_options"/>
+        tools:ignore="ContrastCheck"/>
 
 </LinearLayout>

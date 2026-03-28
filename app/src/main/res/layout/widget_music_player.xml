@@ -55,11 +55,19 @@
             android:ellipsize="end"/>
     </LinearLayout>
 
+    <ImageButton
+        android:id="@+id/widgetRandom"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_random_white_24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_random"/>
+
     <!-- Precedente -->
     <ImageButton
             android:id="@+id/widgetPrevious"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_skip_previous_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_previous"/>
@@ -74,12 +82,12 @@
             android:contentDescription="@string/cd_play_pause"/>
 
         <!-- Bottone successivo -->
-        <ImageButton
-            android:id="@+id/widgetNext"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_skip_next_white_24dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/cd_next"/>
+    <ImageButton
+        android:id="@+id/widgetNext"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_next"
+        android:src="@drawable/ic_skip_next_white_24dp" />
 
 </LinearLayout>

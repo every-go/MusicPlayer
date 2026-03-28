@@ -7,11 +7,11 @@ plugins {
 // Nel tuo build.gradle (Module: app) aggiungi questo blocco dentro android { }
 
 android {
-    namespace = "com.example.musicplayer"
+    namespace = "com.everygo.musicplayer"
     compileSdk = 36         // ← aggiungi questa riga
 
     defaultConfig {
-        applicationId = "com.example.musicplayer"
+        applicationId = "com.everygo.musicplayer"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

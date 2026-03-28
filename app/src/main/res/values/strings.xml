@@ -23,6 +23,7 @@
     <string name="label_artist">Artista</string>
     <string name="label_album_artist">Artista album</string>
     <string name="label_album">Album</string>
+    <string name="name_album">Album</string>
     <string name="label_year">Anno</string>
     <string name="label_track_number">Numero traccia</string>
     <string name="label_genre">Genere</string>
@@ -36,4 +37,8 @@
     <string name="modifica_copertina">Modifica copertina</string>
     <string name="copertina">Copertina album</string>
     <string name="hint_research">Cerca brani, artista, album</string>
+    <string name="no_playlist">Nessuna playlist</string>
+    <string name="new_playlist">Nuova playlist</string>
+    <string name="tabs_navigation">Schede di navigazione</string>
+    <string name="reorder">Riordina</string>
 </resources>

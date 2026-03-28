@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -10,18 +10,21 @@
 
     <ImageView
         android:id="@+id/ivDragHandle"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginEnd="8dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:src="@drawable/ic_drag_white_24dp"
-        android:contentDescription="Riordina"/>
+        app:tint="#666666"
+        android:contentDescription="@string/reorder"
+        android:importantForAccessibility="yes"
+        android:clickable="true"
+        android:focusable="true"/>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginEnd="8dp">
+        android:layout_marginStart="8dp">
 
         <TextView
             android:id="@+id/tvTrackTitle"
@@ -43,12 +46,14 @@
 
     </LinearLayout>
 
-    <ImageButton
-        android:id="@+id/btnTrackOverflow"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/ic_more_vert_white_24dp"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/cd_more_options"/>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSongMenu"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/cd_more_options"
+        app:icon="@drawable/ic_more_vert_white_24dp"
+        app:iconSize="24dp"
+        app:iconTint="#BB86FC"
+        android:background="?android:attr/selectableItemBackgroundBorderless"/>
 
 </LinearLayout>

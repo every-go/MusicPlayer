@@ -13,16 +13,27 @@
         android:clipToPadding="false"
         android:paddingBottom="8dp"/>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNewPlaylist"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_add_white_24dp"
-        android:contentDescription="Nuova playlist"
+        android:contentDescription="@string/new_playlist"
+        android:focusable="true"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:insetLeft="0dp"
+        android:insetRight="0dp"
+        app:icon="@drawable/ic_add_white_24dp"
+        app:iconGravity="textStart"
+        app:iconSize="40dp"
+        app:iconTint="@android:color/white"
         app:backgroundTint="#BB86FC"
+        app:cornerRadius="37.5dp"
+        app:iconPadding="0dp"
+        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
         xmlns:app="http://schemas.android.com/apk/res-auto"/>
 
     <TextView
@@ -30,7 +41,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="Nessuna playlist"
+        android:text="@string/no_playlist"
         android:textColor="#AAAAAA"
         android:textSize="16sp"
         android:gravity="center"

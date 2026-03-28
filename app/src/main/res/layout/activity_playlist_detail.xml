@@ -16,8 +16,8 @@
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_skip_previous_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/back"/>
@@ -36,8 +36,8 @@
 
         <ImageButton
             android:id="@+id/btnPlayAll"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginStart="8dp"
             android:src="@drawable/ic_play_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
@@ -53,6 +53,8 @@
         android:clipToPadding="false"
         android:paddingBottom="8dp"/>
 
-    <include layout="@layout/layout_mini_player"/>
+    <include
+        android:id="@+id/miniPlayerInclude"
+        layout="@layout/layout_mini_player"/>
 
 </LinearLayout>

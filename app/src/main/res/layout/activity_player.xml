@@ -2,7 +2,7 @@
 <!--
     activity_player.xml  →  collegato a PlayerActivity.kt
 -->
-<com.example.musicplayer.GestureLinearLayout
+<com.everygo.musicplayer.GestureLinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -94,7 +94,6 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <!-- tvCurrentTime: rimuovi android:text e aggiungi tools:text -->
         <TextView
             android:id="@+id/tvCurrentTime"
             android:layout_width="0dp"
@@ -105,7 +104,6 @@
             android:textColor="#888888"
             android:textSize="12sp"/>
 
-        <!-- tvTotalTime: stessa cosa -->
         <TextView
             android:id="@+id/tvTotalTime"
             android:layout_width="0dp"
@@ -118,7 +116,7 @@
             android:gravity="end"/>
     </LinearLayout>
 
-    <!-- Controlli: precedente | play/pausa | successivo -->
+    <!-- Controlli: random | precedente | play/pausa | successivo -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -128,21 +126,20 @@
 
         <ImageButton
             android:id="@+id/btnRandom"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_random_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_random"/>
 
         <ImageButton
             android:id="@+id/btnPrevious"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_skip_previous_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_previous"/>
 
-        <!-- Bottone play/pausa -->
         <ImageButton
             android:id="@+id/btnPlayPause"
             android:layout_width="48dp"
@@ -151,15 +148,14 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_play_pause"/>
 
-        <!-- Bottone successivo -->
         <ImageButton
             android:id="@+id/btnNext"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_skip_next_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_next"/>
 
     </LinearLayout>
 
-</com.example.musicplayer.GestureLinearLayout>
+</com.everygo.musicplayer.GestureLinearLayout>

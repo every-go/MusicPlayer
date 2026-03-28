@@ -22,11 +22,11 @@
 
             <ImageButton
                 android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:src="@drawable/ic_skip_previous_white_24dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/cd_previous"/>
+                android:contentDescription="@string/back"/>
 
             <TextView
                 android:layout_width="0dp"
@@ -50,16 +50,19 @@
 
         <!-- Titolo -->
         <TextView
+            android:id="@+id/labelTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_title"
             android:textColor="#AAAAAA"
             android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:labelFor="@id/etTitle"/>
         <EditText
             android:id="@+id/etTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC"
             android:inputType="text"
@@ -68,16 +71,19 @@
 
         <!-- Artista -->
         <TextView
+            android:id="@+id/labelArtist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_artist"
             android:textColor="#AAAAAA"
             android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:labelFor="@id/etArtist"/>
         <EditText
             android:id="@+id/etArtist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC"
             android:inputType="text"
@@ -86,16 +92,19 @@
 
         <!-- Album Artist -->
         <TextView
+            android:id="@+id/labelAlbumArtist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_album_artist"
             android:textColor="#AAAAAA"
             android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:labelFor="@id/etAlbumArtist"/>
         <EditText
             android:id="@+id/etAlbumArtist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC"
             android:inputType="text"
@@ -104,16 +113,19 @@
 
         <!-- Album -->
         <TextView
+            android:id="@+id/labelAlbum"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_album"
             android:textColor="#AAAAAA"
             android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:labelFor="@id/etAlbum"/>
         <EditText
             android:id="@+id/etAlbum"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC"
             android:inputType="text"
@@ -122,16 +134,19 @@
 
         <!-- Anno -->
         <TextView
+            android:id="@+id/labelYear"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_year"
             android:textColor="#AAAAAA"
             android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:labelFor="@id/etYear"/>
         <EditText
             android:id="@+id/etYear"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC"
             android:inputType="number"
@@ -140,16 +155,19 @@
 
         <!-- Numero traccia -->
         <TextView
+            android:id="@+id/labelTrackNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_track_number"
             android:textColor="#AAAAAA"
             android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:labelFor="@id/etTrackNumber"/>
         <EditText
             android:id="@+id/etTrackNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC"
             android:inputType="number"
@@ -158,16 +176,19 @@
 
         <!-- Genere -->
         <TextView
+            android:id="@+id/labelGenre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/label_genre"
             android:textColor="#AAAAAA"
             android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp"
+            android:labelFor="@id/etGenre"/>
         <EditText
             android:id="@+id/etGenre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:textColor="#FFFFFF"
             android:backgroundTint="#BB86FC"
             android:inputType="text"

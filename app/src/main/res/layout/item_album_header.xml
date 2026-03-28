@@ -23,8 +23,8 @@
 
         <ImageButton
             android:id="@+id/btnEditCover"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="bottom|end"
             android:layout_margin="4dp"
             android:src="@drawable/ic_edit_white_24dp"

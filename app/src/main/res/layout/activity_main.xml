@@ -18,8 +18,8 @@
 
         <ImageButton
             android:id="@+id/btnPlayAll"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginEnd="10dp"
             android:src="@drawable/ic_play_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
@@ -42,38 +42,46 @@
 
         <ImageButton
             android:id="@+id/btnSearch"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_search_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_search"/>
 
         <ImageButton
             android:id="@+id/btnOverflow"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_more_vert_white_24dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_more_options"/>
 
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/etSearch"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="12dp"
-        android:autofillHints="no"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#AAAAAA"
-        android:inputType="text"
-        android:imeOptions="actionSearch"
-        android:background="@null"
-        android:hint="@string/hint_research"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        app:endIconMode="clear_text"
+        app:endIconTint="#AAAAAA"
+        app:boxBackgroundColor="#1E1E1E"
+        app:hintTextColor="#AAAAAA">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#AAAAAA"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:hint="@string/hint_research"
+            android:autofillHints="no"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <ProgressBar
         android:id="@+id/progressScan"
@@ -90,6 +98,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:background="#1E1E1E"
+        android:contentDescription="@string/tabs_navigation"
         app:tabTextColor="#AAAAAA"
         app:tabSelectedTextColor="#BB86FC"
         app:tabIndicatorColor="#BB86FC"
