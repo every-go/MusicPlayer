@@ -108,7 +108,7 @@ fun showSongMenu(
                 true
             }
             MENU_ID_GO_TO_ARTIST_SINGLE -> {
-                onGoToArtist?.invoke(artists.first())
+                onGoToArtist?.invoke(artists.firstOrNull() ?: return@setOnMenuItemClickListener true)
                 true
             }
             in 100..199 -> {

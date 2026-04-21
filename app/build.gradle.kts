@@ -1,14 +1,13 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    alias(libs.plugins.android.application)   // ← QUESTA RIGA sblocca "android { }"
+    alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-parcelize")
 }
-
-// Nel tuo build.gradle (Module: app) aggiungi questo blocco dentro android { }
 
 android {
     namespace = "com.everygo.musicplayer"
-    compileSdk = 36         // ← aggiungi questa riga
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.everygo.musicplayer"

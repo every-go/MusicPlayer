@@ -12,7 +12,7 @@ object PlaylistRepository {
         return try {
             val file = java.io.File(context.filesDir, FILE_NAME)
             if (!file.exists()) return emptyList()
-            val json = JSONArray(file.readText())
+            val json = JSONArray(file.readText(Charsets.UTF_8))
             (0 until json.length()).map { i ->
                 val obj = json.getJSONObject(i)
                 val ids = obj.getJSONArray("songIds")
@@ -39,7 +39,7 @@ object PlaylistRepository {
                 obj.put("songIds", ids)
                 json.put(obj)
             }
-            java.io.File(context.filesDir, FILE_NAME).writeText(json.toString())
+            java.io.File(context.filesDir, FILE_NAME).writeText(json.toString(), Charsets.UTF_8)
         } catch (e: Exception) {
             e.printStackTrace()
         }

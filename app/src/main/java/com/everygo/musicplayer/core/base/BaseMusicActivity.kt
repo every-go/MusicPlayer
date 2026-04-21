@@ -55,8 +55,13 @@ abstract class BaseMusicActivity : AppCompatActivity() {
         miniPlayer.setOnClickListener {
             if (musicService?.currentSong != null) {
                 val intent = Intent(this, PlayerActivity::class.java).apply {
-                    putExtra(PlayerActivity.EXTRA_SONG_INDEX, musicService!!.currentIndex)
+                    putParcelableArrayListExtra(
+                        "playlist",
+                        ArrayList(musicService!!.playlist)
+                    )
+                    putExtra("song_index", musicService!!.currentIndex)
                 }
+                startActivity(intent)
                 startActivity(intent)
             }
         }

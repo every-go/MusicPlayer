@@ -25,14 +25,12 @@ class GestureLinearLayout(context: Context, attrs: AttributeSet?) : LinearLayout
             MotionEvent.ACTION_MOVE -> {
                 val diffX = kotlin.math.abs(event.x - startX)
                 val diffY = kotlin.math.abs(event.y - startY)
-                // Se è uno swipe orizzontale, intercetta l'evento
+
                 if (diffX > diffY && diffX > 30) {
-                    gestureDetector?.onTouchEvent(event)
                     return true
                 }
             }
         }
-        gestureDetector?.onTouchEvent(event)
         return false
     }
 

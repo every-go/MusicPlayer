@@ -6,62 +6,80 @@ class HistoryQueue {
     var currentIndex: Int = -1
     var isShuffleEnabled: Boolean = true
 
-    /** Conta quante canzoni sono state messe in coda esplicita ("riproduci dopo").
-     *  Ogni chiamata a next() decrementa il contatore e riproduce currentIndex+1
-     *  in ordine, senza passare per la logica shuffle. */
     var explicitNextCount: Int = 0
 
-    private val history        = mutableListOf<Int>()
+    private val history = mutableListOf<Int>()
     private val forwardHistory = mutableListOf<Int>()
 
-    val currentSong get() = playlist.getOrNull(currentIndex)
+    val currentSong: Song?
+        get() = playlist.getOrNull(currentIndex)
+
+    private fun ensureValidIndex() {
+        if (playlist.isNotEmpty() && currentIndex !in playlist.indices) {
+            currentIndex = 0
+        }
+    }
 
     @Synchronized
     fun moveTo(index: Int, addToHistory: Boolean = true): Song? {
-        if (playlist.isEmpty() || index < 0 || index >= playlist.size) return null
+        if (playlist.isEmpty()) return null
 
-        if (addToHistory && currentIndex != -1 && currentIndex != index) {
+        val safeIndex = index.coerceIn(playlist.indices)
+
+        if (addToHistory && currentIndex in playlist.indices && currentIndex != safeIndex) {
             history.add(currentIndex)
             forwardHistory.clear()
         }
-        currentIndex = index
-        return playlist[index]
+
+        currentIndex = safeIndex
+        return playlist[safeIndex]
     }
 
     @Synchronized
     fun next(): Song? {
         if (playlist.isEmpty()) return null
 
-        // Se ci sono canzoni messe in coda esplicita, riproducile in ordine
+        ensureValidIndex()
+
         if (explicitNextCount > 0) {
             explicitNextCount--
-            return moveTo(currentIndex + 1)
+            return moveTo(getNextSequentialIndex())
         }
 
         if (isShuffleEnabled && playlist.size > 1) {
+
             if (forwardHistory.isNotEmpty()) {
-                val nextIndex = forwardHistory.removeAt(forwardHistory.size - 1)
-                history.add(currentIndex)
-                currentIndex = nextIndex
-                return playlist[currentIndex]
+                val nextIndex = forwardHistory.removeAt(forwardHistory.lastIndex)
+                return moveTo(nextIndex, addToHistory = false)
             }
-            val nextIndex = (0 until playlist.size).filter { it != currentIndex }.random()
+
+            val candidates = playlist.indices.filter { it != currentIndex }
+            val nextIndex = candidates.random()
+
             return moveTo(nextIndex)
         }
 
-        return moveTo((currentIndex + 1) % playlist.size)
+        return moveTo((currentIndex + 1).coerceAtMost(playlist.lastIndex))
     }
 
     @Synchronized
     fun previous(): PreviousAction {
+        ensureValidIndex()
+
         return if (history.isNotEmpty()) {
             forwardHistory.add(currentIndex)
-            val prevIndex = history.removeAt(history.size - 1)
+            val prevIndex = history.removeAt(history.lastIndex)
             currentIndex = prevIndex
             PreviousAction.PlaySong(playlist[prevIndex])
         } else {
             PreviousAction.SeekToStart
         }
+    }
+
+    private fun getNextSequentialIndex(): Int {
+        ensureValidIndex()
+        if (playlist.isEmpty()) return 0
+        return (currentIndex + 1).coerceAtMost(playlist.lastIndex)
     }
 
     fun toggleShuffle() {
