@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 
 class SearchAdapter(
     private val onSongClick: (Song) -> Unit,
@@ -52,7 +53,7 @@ class SearchAdapter(
     inner class SongVH(v: View) : RecyclerView.ViewHolder(v) {
         val tvTitle: TextView  = v.findViewById(R.id.tvSearchTitle)
         val tvSub: TextView    = v.findViewById(R.id.tvSearchSubtitle)
-        val btnMenu: android.widget.ImageButton = v.findViewById(R.id.btnSearchSongMenu)
+        val btnMenu: MaterialButton = v.findViewById(R.id.btnSearchSongMenu)
 
         fun bind(item: SearchResult.SongResult) {
             tvTitle.text = item.song.title

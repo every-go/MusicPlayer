@@ -46,15 +46,10 @@ class MusicService : Service() {
         get() = queue.isShuffleEnabled
         set(value) { queue.isShuffleEnabled = value }
 
-    // Callbacks verso le Activity
     val onSongChanged = mutableListOf<(Song) -> Unit>()
     val onPlaybackStateChanged = mutableListOf<(Boolean) -> Unit>()
 
     // ---- MediaSession ----
-    // È l'oggetto che parla con Android per:
-    //   - mostrare i controlli sul lock screen
-    //   - mostrare i controlli nel notification shade
-    //   - rispondere ai tasti fisici (cuffie, bluetooth)
     private lateinit var mediaSession: MediaSessionCompat
 
     // ---- Lifecycle ----
@@ -123,7 +118,6 @@ class MusicService : Service() {
         updateMediaSessionPlaybackState(true)
         updateMediaSessionMetadata(song)
 
-        // Un solo Thread per copertina, notifica, widget
         Thread {
             val art = SongRepository.getAlbumArt(this, song.uri)
             updateNotification(song, art)
@@ -163,7 +157,8 @@ class MusicService : Service() {
         val insertIndex = queue.currentIndex + 1
         mutablePlaylist.add(insertIndex, song)
         queue.playlist = mutablePlaylist
-        queue.hasExplicitNext = true
+        // Incrementa il contatore: supporta code multiple consecutive
+        queue.explicitNextCount++
     }
 
     @Synchronized
@@ -249,14 +244,12 @@ class MusicService : Service() {
             this, 0, openPlayerIntent, PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Modifica l'icona del random in base allo stato
         val randomIcon = if (isShuffleEnabled) {
             R.drawable.ic_random_white_24dp
         } else {
             R.drawable.ic_random_off_white_24dp
         }
 
-        // Azioni nella notifica: precedente, play/pausa, successivo
         val prevIntent = PendingIntent.getService(this, 1,
             Intent(this, MusicService::class.java).setAction(ACTION_PREVIOUS),
             PendingIntent.FLAG_IMMUTABLE)
@@ -281,8 +274,7 @@ class MusicService : Service() {
             .setLargeIcon(art)
             .setContentIntent(contentIntent)
             .setOngoing(true)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)  // visibile sul lock screen
-            // Collega la notifica alla MediaSession → Android usa i metadati per il lock screen
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
                     .setMediaSession(mediaSession.sessionToken)
@@ -308,7 +300,6 @@ class MusicService : Service() {
         }
     }
 
-    // Gestione Intent dalla notifica (bottoni precedente/play-pausa/successivo)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_PLAY_PAUSE -> togglePlayPause()
@@ -323,7 +314,6 @@ class MusicService : Service() {
         const val CHANNEL_ID      = "music_player_channel"
         const val NOTIFICATION_ID = 1
 
-        // Azioni per i bottoni nella notifica
         const val ACTION_PLAY_PAUSE = "ACTION_PLAY_PAUSE"
         const val ACTION_NEXT       = "ACTION_NEXT"
         const val ACTION_PREVIOUS   = "ACTION_PREVIOUS"

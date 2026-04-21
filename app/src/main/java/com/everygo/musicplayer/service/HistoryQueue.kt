@@ -6,17 +6,16 @@ class HistoryQueue {
     var currentIndex: Int = -1
     var isShuffleEnabled: Boolean = true
 
-    var hasExplicitNext = false
+    /** Conta quante canzoni sono state messe in coda esplicita ("riproduci dopo").
+     *  Ogni chiamata a next() decrementa il contatore e riproduce currentIndex+1
+     *  in ordine, senza passare per la logica shuffle. */
+    var explicitNextCount: Int = 0
 
     private val history        = mutableListOf<Int>()
     private val forwardHistory = mutableListOf<Int>()
 
     val currentSong get() = playlist.getOrNull(currentIndex)
 
-    /**
-     * Registra l'indice corrente nello storico e aggiorna currentIndex.
-     * Ritorna la Song da riprodurre, o null se l'indice non è valido.
-     */
     @Synchronized
     fun moveTo(index: Int, addToHistory: Boolean = true): Song? {
         if (playlist.isEmpty() || index < 0 || index >= playlist.size) return null
@@ -29,16 +28,13 @@ class HistoryQueue {
         return playlist[index]
     }
 
-    /**
-     * Calcola il prossimo indice (shuffle o lineare), aggiorna lo stato
-     * e ritorna la Song successiva. Ritorna null se la playlist è vuota.
-     */
     @Synchronized
     fun next(): Song? {
         if (playlist.isEmpty()) return null
 
-        if (hasExplicitNext) {
-            hasExplicitNext = false
+        // Se ci sono canzoni messe in coda esplicita, riproducile in ordine
+        if (explicitNextCount > 0) {
+            explicitNextCount--
             return moveTo(currentIndex + 1)
         }
 
@@ -56,14 +52,6 @@ class HistoryQueue {
         return moveTo((currentIndex + 1) % playlist.size)
     }
 
-    /**
-     * Determina l'azione da eseguire quando l'utente preme "precedente":
-     *   - PlaySong  → naviga alla canzone precedente nello storico
-     *   - SeekToStart → non c'è storia, si deve tornare all'inizio del brano corrente
-     *
-     * Nota: la decisione basata sulla posizione corrente (> 3 secondi) rimane
-     * in MusicService, perché dipende da MediaPlayer.
-     */
     @Synchronized
     fun previous(): PreviousAction {
         return if (history.isNotEmpty()) {
@@ -80,7 +68,6 @@ class HistoryQueue {
         isShuffleEnabled = !isShuffleEnabled
     }
 
-    /** Risultato possibile di previous() */
     sealed class PreviousAction {
         data class PlaySong(val song: Song) : PreviousAction()
         object SeekToStart : PreviousAction()

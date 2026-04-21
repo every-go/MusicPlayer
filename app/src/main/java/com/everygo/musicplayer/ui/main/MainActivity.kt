@@ -15,7 +15,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.tabs.TabLayoutMediator
 import com.everygo.musicplayer.databinding.ActivityMainBinding
@@ -35,12 +34,24 @@ class MainActivity : BaseMusicActivity() {
             else Toast.makeText(this, "Permesso necessario per leggere la musica", Toast.LENGTH_LONG).show()
         }
 
+    // Callback per chiudere la ricerca con il tasto indietro.
+    // È abilitato solo quando la ricerca è aperta, così non interferisce
+    // con la normale navigazione quando la ricerca è chiusa.
+    private val searchBackCallback = object : androidx.activity.OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            closeSearch()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         supportActionBar?.hide()
+
+        // Registra il callback per il tasto indietro (inizialmente disabilitato)
+        onBackPressedDispatcher.addCallback(this, searchBackCallback)
 
         setupTabs()
         setupSearchRecyclerView()
@@ -65,17 +76,6 @@ class MainActivity : BaseMusicActivity() {
         }
 
         bindMusicService()
-
-        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding.tilSearch.isVisible) {
-                    closeSearch()
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
-                }
-            }
-        })
     }
 
     override fun onResume() {
@@ -205,6 +205,8 @@ class MainActivity : BaseMusicActivity() {
                 binding.etSearch.requestFocus()
                 val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
                 imm.showSoftInput(binding.etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+                // Abilita il callback: da questo momento il tasto indietro chiude la ricerca
+                searchBackCallback.isEnabled = true
             } else {
                 closeSearch()
             }
@@ -273,27 +275,22 @@ class MainActivity : BaseMusicActivity() {
         val matchedSongs = allSongs.filter { song ->
             tokens.all { token -> song.title.lowercase().contains(token) }
         }
-
         val matchedArtists = allArtists.filter { artist ->
             tokens.all { token -> artist.name.lowercase().contains(token) }
         }
-
         val matchedAlbums = allAlbums.filter { album ->
             tokens.all { token -> album.title.lowercase().contains(token) }
         }
 
         val results = mutableListOf<SearchResult>()
-
         if (matchedSongs.isNotEmpty()) {
             results.add(SearchResult.Header("Brani"))
             matchedSongs.forEach { results.add(SearchResult.SongResult(it)) }
         }
-
         if (matchedArtists.isNotEmpty()) {
             results.add(SearchResult.Header("Artisti"))
             matchedArtists.forEach { results.add(SearchResult.ArtistResult(it.name)) }
         }
-
         if (matchedAlbums.isNotEmpty()) {
             results.add(SearchResult.Header("Album"))
             matchedAlbums.forEach { results.add(SearchResult.AlbumResult(it)) }
@@ -306,6 +303,8 @@ class MainActivity : BaseMusicActivity() {
     }
 
     private fun closeSearch() {
+        // Disabilita il callback: il tasto indietro torna al comportamento normale
+        searchBackCallback.isEnabled = false
         binding.tilSearch.visibility = View.GONE
         binding.etSearch.text?.clear()
         binding.recyclerViewSearch.visibility = View.GONE
@@ -337,7 +336,7 @@ class MainActivity : BaseMusicActivity() {
         Thread {
             val cached = SongCache.load(this)
             if (cached != null) {
-                isFirstScan = false // cache esiste → non è la prima volta
+                isFirstScan = false
                 runOnUiThread { applySongs(cached) }
             } else {
                 runOnUiThread { binding.progressScan.visibility = View.VISIBLE }

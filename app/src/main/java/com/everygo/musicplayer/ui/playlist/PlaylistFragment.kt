@@ -68,12 +68,19 @@ class PlaylistsFragment : Fragment() {
         _binding = null
     }
 
-    private fun showCreateDialog() {
-        val input = EditText(requireContext()).apply {
-            hint = "Nome playlist"
+    private fun makeEditText(prefill: String? = null): EditText {
+        val p = (8 * resources.displayMetrics.density + 0.5f).toInt()
+        return EditText(requireContext()).apply {
+            if (prefill != null) setText(prefill)
             setTextColor(0xFFFFFFFF.toInt())
             setHintTextColor(0xFFAAAAAA.toInt())
+            setBackgroundColor(0xFF2D2D2D.toInt())
+            setPadding(p, p, p, p)
         }
+    }
+
+    private fun showCreateDialog() {
+        val input = makeEditText().apply { hint = "Nome playlist" }
         AlertDialog.Builder(requireContext())
             .setTitle("Nuova playlist")
             .setView(input)
@@ -89,10 +96,7 @@ class PlaylistsFragment : Fragment() {
     }
 
     private fun showRenameDialog(playlist: Playlist) {
-        val input = EditText(requireContext()).apply {
-            setText(playlist.name)
-            setTextColor(0xFFFFFFFF.toInt())
-        }
+        val input = makeEditText(playlist.name)
         AlertDialog.Builder(requireContext())
             .setTitle("Rinomina playlist")
             .setView(input)

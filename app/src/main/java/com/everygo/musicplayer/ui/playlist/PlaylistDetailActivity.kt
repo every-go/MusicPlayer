@@ -25,7 +25,6 @@ class PlaylistDetailActivity : BaseMusicActivity() {
     private var playlistId: String = ""
     private var songs: List<Song> = emptyList()
 
-    // Launcher per la modifica dei metadati
     private val editMetadataLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -35,7 +34,6 @@ class PlaylistDetailActivity : BaseMusicActivity() {
         }
     }
 
-    // Launcher per eliminazione file
     private val deleteLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -49,23 +47,7 @@ class PlaylistDetailActivity : BaseMusicActivity() {
         binding = ActivityPlaylistDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
-            val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-            binding.header.setPadding(
-                binding.header.paddingLeft,
-                bars.top,
-                binding.header.paddingRight,
-                binding.header.paddingBottom
-            )
-            binding.miniPlayerInclude.root.setPadding(
-                binding.miniPlayerInclude.root.paddingLeft,
-                binding.miniPlayerInclude.root.paddingTop,
-                binding.miniPlayerInclude.root.paddingRight,
-                bars.bottom
-            )
-            insets
-        }
-
+        // La barra di stato è gestita da android:fitsSystemWindows="true" nel layout
         supportActionBar?.hide()
 
         playlistId = intent.getStringExtra(EXTRA_PLAYLIST_ID) ?: ""
@@ -139,13 +121,11 @@ class PlaylistDetailActivity : BaseMusicActivity() {
         val popup = PopupMenu(this, anchor)
         val menu = popup.menu
 
-        // Voci standard
         menu.add(0, 0, 0, "Riproduci dopo")
-        menu.add(0, 1, 1, "Rimuovi dalla playlist")  // invece di "Aggiungi a playlist"
+        menu.add(0, 1, 1, "Rimuovi dalla playlist")
         menu.add(0, 2, 2, "Modifica")
         menu.add(0, 3, 3, "Elimina")
 
-        // Sottomenu artisti
         if (artistNames.isNotEmpty()) {
             val artistSubMenu = menu.addSubMenu(0, 4, 4, "Vai all'artista")
             artistNames.forEachIndexed { index, artist ->
@@ -153,23 +133,17 @@ class PlaylistDetailActivity : BaseMusicActivity() {
             }
         }
 
-        // Voce per andare all'album
         menu.add(0, 5, 5, "Vai all'album")
 
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                0 -> {
-                    musicService?.playNextSong(song)
-                    true
-                }
+                0 -> { musicService?.playNextSong(song); true }
                 1 -> {
-                    // Rimuovi dalla playlist
                     PlaylistRepository.removeSong(this, playlistId, song.id)
                     loadPlaylist()
                     true
                 }
                 2 -> {
-                    // Modifica metadati
                     val intent = Intent(this, EditMetadataActivity::class.java).apply {
                         putExtra(EditMetadataActivity.EXTRA_SONG_ID,      song.id.toString())
                         putExtra(EditMetadataActivity.EXTRA_SONG_URI,     song.uri.toString())
@@ -185,31 +159,26 @@ class PlaylistDetailActivity : BaseMusicActivity() {
                     true
                 }
                 3 -> {
-                    // Elimina file
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         val pi = MediaStore.createDeleteRequest(contentResolver, listOf(song.uri))
                         deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
                     } else {
                         contentResolver.delete(song.uri, null, null)
-                        scanSongs { allSongs ->
-                            loadPlaylist()
-                        }
+                        scanSongs { _ -> loadPlaylist() }
                     }
                     true
                 }
                 in 100..199 -> {
                     val artist = artistNames[item.itemId - 100]
-                    val intent = Intent(this, ArtistDetailActivity::class.java).apply {
+                    startActivity(Intent(this, ArtistDetailActivity::class.java).apply {
                         putExtra(ArtistDetailActivity.EXTRA_ARTIST_NAME, artist)
-                    }
-                    startActivity(intent)
+                    })
                     true
                 }
                 5 -> {
-                    val intent = Intent(this, AlbumDetailActivity::class.java).apply {
+                    startActivity(Intent(this, AlbumDetailActivity::class.java).apply {
                         putExtra(AlbumDetailActivity.EXTRA_ALBUM_NAME, song.album)
-                    }
-                    startActivity(intent)
+                    })
                     true
                 }
                 else -> false
@@ -230,7 +199,6 @@ class PlaylistDetailActivity : BaseMusicActivity() {
 
         override fun clearView(rv: RecyclerView, vh: RecyclerView.ViewHolder) {
             super.clearView(rv, vh)
-            // Salva il nuovo ordine
             val newOrder = trackAdapter.currentList.map { it.id }
             PlaylistRepository.reorder(this@PlaylistDetailActivity, playlistId, newOrder)
         }
