@@ -29,15 +29,12 @@ class MusicService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
 
-    private val queue = HistoryQueue()
+    private var queue = HistoryQueue()
 
     var playlist: List<Song>
         get() = queue.playlist
         set(value) {
             queue.playlist = value
-            if (queue.currentIndex !in value.indices) {
-                queue.currentIndex = -1
-            }
         }
 
     val currentIndex get() = queue.currentIndex
@@ -107,8 +104,8 @@ class MusicService : Service() {
     }
 
     @Synchronized
-    fun playSong(index: Int, addToHistory: Boolean = true) {
-        val song = queue.moveTo(index, addToHistory) ?: return
+    fun playSong(index: Int) {
+        val song = queue.moveTo(index) ?: return
 
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
@@ -161,19 +158,16 @@ class MusicService : Service() {
 
     @Synchronized
     fun playNext() {
-        queue.next() ?: return
-        playSong(queue.currentIndex, addToHistory = false)
+        val next = queue.next() ?: return
+        playCurrent(next)
     }
 
     @Synchronized
     fun playNextSong(song: Song) {
-        val list = queue.playlist.toMutableList()
-        val insertAt = (queue.currentIndex + 1 + queue.explicitNextCount)
-            .coerceIn(0, list.size)
-
-        list.add(insertAt, song)
-        queue.playlist = list
-        queue.explicitNextCount++
+        val index = queue.playlist.indexOf(song)
+        if (index != -1) {
+            queue.enqueueNext(index)
+        }
     }
 
     @Synchronized
@@ -183,13 +177,39 @@ class MusicService : Service() {
             return
         }
 
-        when (queue.previous()) {
-            is HistoryQueue.PreviousAction.PlaySong ->
-                playSong(queue.currentIndex, addToHistory = false)
-
-            is HistoryQueue.PreviousAction.SeekToStart ->
-                mediaPlayer?.seekTo(0)
+        when (val action = queue.previous()) {
+            is HistoryQueue.PreviousAction.PlaySong -> playCurrent(action.song)
+            is HistoryQueue.PreviousAction.SeekToStart -> mediaPlayer?.seekTo(0)
         }
+    }
+
+    private fun playCurrent(song: Song) {
+        mediaPlayer?.release()
+        mediaPlayer = MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+            setDataSource(applicationContext, song.uri)
+            prepare()
+            start()
+            setOnCompletionListener { playNext() }
+        }
+
+        onSongChanged.forEach { it(song) }
+        onPlaybackStateChanged.forEach { it(true) }
+
+        updateMediaSessionPlaybackState(true)
+        updateMediaSessionMetadata(song)
+
+        Thread {
+            val art = SongRepository.getAlbumArt(this, song.uri)
+            updateNotification(song, art)
+            updateMediaSessionMetadata(song, art)
+            MusicWidgetProvider.update(this, song, art, true)
+        }.start()
     }
 
     fun toggleShuffle() {
